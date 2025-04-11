@@ -1,0 +1,381 @@
+#!/bin/bash
+
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# 16S rRNA Gene Amplicon Sequencing Analysis Pipeline
+# Developed for nanopore-based sequencing data by the University of Copenhagen,
+# Department of Food Science.
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+# REQUIREMENTS:
+# 1. QIIME 2: Installed and activated in the appropriate environment.
+# 2. Classifier Directory: A pre-trained classifier and reference sequences must be available in the `classifier/` directory.
+# 3. Chopper: For quality filtering of FASTQ files.
+# 4. Vsearch: For converting FASTQ to FASTA and additional filtering.
+# 5. Custom Script: `create_feature_table.py` for constructing feature tables.
+# 6. Parallel: For efficient parallel processing of classification tasks.
+# 7. SeqKit: For subsampling FASTA files with high sequence counts.
+
+# Ensure that all dependencies are installed and accessible from the script's environment.
+# Developed by Lukasz Krych krych@food.ku.dk and Eoghan Reilly eoghan@food.ku.dk
+# >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
+
+# Default values for command line arguments
+outdir="erda_backup"
+scriptdir="~/my_scripts"
+qfilt=15
+min_len=800
+max_len=1600
+threads=20
+bc_kit="SQK16S-GXO192"
+
+# Function to display the script's manual
+show_help() {
+  cat /home/kuserver/my_scripts/motif_finder.man
+}
+
+# Parse command-line arguments
+while getopts "m:f:a:o:s:d:h" opt; do
+  case $opt in
+    od) outdir="$OPTARG" ;;
+    sd) scriptdir="$OPTARG" ;;
+    q) qfilt="$OPTARG" ;;
+    ln) min_len="$OPTARG" ;;
+    lx) max_len="$OPTARG" ;;
+    t) threads="$OPTARG" ;;
+    bk) bc_kit="$OPTARG"
+    h) show_help ;;
+    \?)
+      echo "Invalid option: -$OPTARG" >&2
+      exit 1
+      ;;
+    :)
+      echo "Option -$OPTARG requires an argument." >&2
+      exit 1
+      ;;
+  esac
+done
+
+
+
+
+# Exit script immediately if any command fails
+set -e
+
+# Set clock for recording script runtime
+SECONDS=1
+
+### Step 1: Demultiplex FASTQ files using Guppy barcoder
+
+if [ -d "../demultiplexed_data" ]; then
+    echo "Demultiplexed data folder already exists. Skipping guppy_barcoder..."
+else
+    files_no=$(ls *fastq.gz | wc -l)
+    echo ""
+    echo "$files_no FASTQ files to be demultiplexed."
+    echo ""
+    echo "Running guppy_barcoder..."
+    guppy_barcoder -i ./ -s ../demultiplexed_data -t  --barcode_kits SQK16S-GXO192 -r
+    echo "All data demultiplexed!"
+fi
+
+### Step 2: Remove small demultiplexed folders and concatenate remaining FASTQ files
+
+echo "Cleaning and concatenating demultiplexed FASTQ files..."
+cd ../demultiplexed_data
+for folder in BRK*; do
+    if [ -d $folder ]; then
+        echo "$folder is a directory, concatenating files... "
+        cd $folder || { echo "Error: Failed to enter folder $folder"; exit 1; }
+        cat *.fastq > ../${folder}.fastq
+        cd ..
+        rm -r $folder
+    elif
+        [ -f $folder ]; then
+        echo "$folder is a file, skipping concatenation"
+    else
+        echo "$folder is not valid"
+    fi
+done
+
+### Step 3: Filter and convert FASTQ to FASTA
+
+echo "Filtering and converting FASTQ to FASTA..."
+parallel --max-procs 20 --no-notice "chopper -i {} -q 15 -l 800 --maxlength 1600 --headcrop 15 --tailcrop 15 > filt_$(basename {})" ::: BRK*.fastq
+mkdir -p ../${outdir}
+mv BRK*.fastq ../${outdir}/
+parallel --max-procs 20 --no-notice "vsearch --fastq_filter {} --fastaout {.}.fa --fastq_qmax 90 --relabel \$(basename {} | sed 's/^filt_//; s/.fastq//')_" ::: filt*.fastq
+
+pre_filt_seqs=$(cat ../${outdir}/*.fastq | wc -l | awk '{print $1/4}')
+
+echo "Number of succesfully demultiplexed sequences: $pre_filt_seqs " > ../${outdir}/output_logs.txt
+
+# Organize filtered FASTA files
+mkdir -p ../filt_fasta 
+mv *.fa ../filt_fasta/
+
+#clean fastq
+if [ $? -eq 0 ]; then
+    echo "All filtering jobs completed successfully. Removing intermediate FASTQ files..."
+    rm filt*fastq
+else
+    echo "Error during filtering. Keeping intermediate FASTQ files for debugging."
+fi
+
+post_filt_seqs=$(cat ../filt_fasta/*.fa | grep -c ">")
+
+echo "Number of sequences removed by quality and read-length filtering: $(($pre_filt_seqs - $post_filt_seqs)) " >> ../${outdir}/output_logs.txt
+
+### Step 4: Check FASTA file size and quality
+
+echo "Checking FASTA file sizes..."
+
+cd ../filt_fasta/
+# remove empty files
+for file in *.fa; do
+    if [ "$(grep -c ">" "$file")" -eq 0 ]; then
+        echo "Removing $file (Reads: 0)"
+        rm "$file"
+        continue
+    fi
+done    
+# remove small files and subsample large files
+for file in *.fa; do
+    num_sequences=$(grep -c ">" "$file")
+    if [ "$num_sequences" -lt 1000 ]; then
+        echo "Removing $file due to low read number (Reads: $num_sequences)"
+        rm "$file"
+    elif [ "$num_sequences" -gt 30000 ]; then
+        echo "Subsampling $file to 30000 reads removing original (Reads: $num_sequences)"
+        seqkit sample -n 30000 "$file" > "${file%.fa}_subsampled.fa"
+        rm "$file" 
+    else
+        echo "$file has an acceptable number of sequences: $num_sequences"
+    fi
+done
+echo "FASTA file size quality check completed."
+
+### Step 5: Rename and concatenate filtered FASTA files
+
+echo "Renaming filtered FASTA files"
+
+for file in filt_*.fa; do
+  # Extract the desired part using grep and sed
+  new_name=$(echo "$file" | grep -oP '(?<=filt_).*?(?=_subsampled|\.fa)' | sed 's/$/.fna/')
+  
+  # Rename the file
+  if [ -n "$new_name" ]; then
+    mv "$file" "$new_name"
+    echo "Renamed $file to $new_name"
+  else
+    echo "No match for $file"
+  fi
+done
+
+echo "Concatenating all FASTA files"
+
+cat *.fna > ../all_data.fna
+cd ..
+
+post_sizecheck_seqs=$(grep -c ">" all_data.fna)
+
+echo "Number of sequences removed by read number filtering and subsampling: $(($post_filt_seqs - $post_sizecheck_seqs)) " >> ${outdir}/output_logs.txt
+
+if [ -f "all_data.fna" ]; then
+    echo "All data successfully concatenated, removing filt_fasta directory"
+    rm -r filt_fasta demultiplexed_data
+else
+    echo "Failed to concatenate data"
+fi
+
+### Step 6: Import data to QIIME
+
+source activate qiime2
+
+echo "Importing data into QIIME..."
+
+qiime tools import \
+    --type "FeatureData[Sequence]" \
+    --input-path all_data.fna \
+    --output-path all_data.qza
+
+if [ -f 'all_data.qza' ]; then
+    rm all_data.fna
+else
+    echo "Data import to QIIME2 failed"
+fi
+
+### Step 8: Create feature table
+
+qiime tools export \
+    --input-path all_data.qza \
+    --output-path all_data
+
+python ~/my_scripts/create_feature_table.py all_data/dna-sequences.fasta all_data.tsv
+
+biom convert \
+    --input-fp all_data.tsv \
+    --output-fp all_data.biom \
+    --table-type="OTU table" \
+    --to-hdf5
+
+qiime tools import \
+    --type 'FeatureTable[Frequency]' \
+    --input-path all_data.biom \
+    --output-path feat_tab.qza
+
+if [ -f "feat_tab.qza" ]; then
+    echo "Feature table created successfully"
+    rm -r all_data.tsv all_data.biom all_data/
+else
+    echo "Failed to create feature table"
+fi
+
+### Step 9: Detect and remove chimeric sequences
+echo "searching for chimeric sequences..."
+qiime vsearch uchime-ref \
+    --i-table feat_tab.qza \
+    --i-sequences all_data.qza \
+    --i-reference-sequences ~/my_scripts/classifier/16s_lambda_seqs.qza \
+    --o-nonchimeras seqs_nonchimeric.qza \
+    --output-dir uchime \
+    --p-threads 20
+
+
+if [ -f "seqs_nonchimeric.qza" ]; then
+    echo "Chimera filtering completed"
+    rm all_data.qza
+    rm feat_tab.qza
+    rm -r uchime
+else
+    echo "Chimera filtering failed"
+fi
+
+non_chimeric_seqs=$(qiime tools inspect-metadata seqs_nonchimeric.qza | awk '{if ($1=="IDS:") {print $2}}')
+
+echo "Number of sequences removed by chimera filtering: $(($post_sizecheck_seqs - $non_chimeric_seqs)) " >> ${outdir}/output_logs.txt
+
+### Step 7: Reorient reads by comparison to reference database and create new feature table
+
+echo "Orienting all reads..."
+
+qiime rescript orient-seqs \
+    --i-sequences seqs_nonchimeric.qza \
+    --i-reference-sequences ~/my_scripts/classifier/16s_lambda_seqs.qza  \
+    --o-oriented-seqs oriented_seqs.qza \
+    --o-unmatched-seqs unmatched_seqs.qza \
+    --p-threads 20
+
+if [ -f 'oriented_seqs.qza' ]; then
+    rm seqs_nonchimeric.qza
+    rm unmatched_seqs.qza
+else
+    echo "Orientation of reads failed"
+fi
+
+reoriented_seqs=$(qiime tools inspect-metadata oriented_seqs.qza | awk '{if ($1=="IDS:") {print $2}}')
+
+echo "Number of sequences unable to be matched to database when reorienting: $(($non_chimeric_seqs - $reoriented_seqs)) " >> ${outdir}/output_logs.txt
+
+
+qiime tools export \
+    --input-path oriented_seqs.qza \
+    --output-path ${outdir}/rep_seqs
+
+python ~/my_scripts/create_feature_table.py ${outdir}/rep_seqs/dna-sequences.fasta oriented_data.tsv
+
+biom convert \
+    --input-fp oriented_data.tsv \
+    --output-fp oriented_data.biom \
+    --table-type="OTU table" \
+    --to-hdf5
+
+qiime tools import \
+    --type 'FeatureTable[Frequency]' \
+    --input-path oriented_data.biom \
+    --output-path oriented_feat_tab.qza
+
+if [ -f "oriented_feat_tab.qza" ]; then
+    echo "Feature table created successfully"
+    rm -r oriented_data.tsv oriented_data.biom 
+else
+    echo "Failed to create feature table"
+fi
+
+
+### Step 10: Assign taxonomy
+
+echo "Running feature classification..."
+
+qiime feature-classifier classify-sklearn \
+    --i-reads oriented_seqs.qza \
+    --i-classifier ~/my_scripts/classifier/16s_lambda_classifier.qza \
+    --o-classification taxonomy.qza  \
+    --p-confidence 0.9  \
+    --p-n-jobs 20
+
+if [ -f "taxonomy.qza" ]; then
+    echo 'Classification complete'
+    rm oriented_seqs.qza
+else
+    echo "Classification failed"
+fi
+
+# save taxonomy with sequence IDs with representative sequences to allow manual BLASTing
+qiime tools export \
+    --input-path taxonomy.qza \
+    --output-path ${outdir}/rep_seqs
+
+qiime feature-table tabulate-seqs \
+  --i-data oriented_seqs.qza \
+  --o-visualization ${outdir}/rep_seqs/visualise_seqs.qzv
+
+### Step 11: Collapse taxonomy to Level 7 and create visualisation (taxa barplot)
+
+echo "Collapsing taxonomy to Level 7..."
+
+qiime taxa collapse \
+    --i-table oriented_feat_tab.qza \
+    --i-taxonomy taxonomy.qza \
+    --p-level 7 \
+    --o-collapsed-table L7.qza
+
+
+if [ -f "L7.qza" ]; then
+    echo "Taxonomy collapsed to level 7"
+    rm oriented_feat_tab.qza
+else
+    echo "Failed to collapse taxonomy"
+fi
+
+### Step 12: Export final data and remove intermediate outputs
+
+echo "Exporting final table..."
+
+qiime tools export \
+    --input-path L7.qza \
+    --output-path final_feature_table
+
+biom convert \
+    --input-fp final_feature_table/*.biom \
+    --output-fp final_feature_table/feature_table.tsv \
+    --to-tsv &
+
+echo "Exporting taxonomic classifications as tsv file.."
+qiime tools export \
+    --input-path taxonomy.qza \
+    --output-path taxonomy
+
+taxa=$(wc -l final_feature_table/*.tsv | awk '{print $1-1}')
+
+echo -e "\n$reoriented_seqs sequences classified into $taxa distinct taxonomical clusters" >> ${outdir}/output_logs.txt
+
+rm L7.qza
+mv final_feature_table ${outdir}/
+rm taxonomy.qza
+rm -r taxonomy
+
+# print runtime of pipeline
+elapsed_s=$SECONDS
+elapsed_h=$((elapsed_s / 3600))
+elapsed_m=$(($((elapsed_s / 60)) - $((elapsed_h * 60))))
+echo -e "\nElapsed time: "$elapsed_h"h "$elapsed_m"m" >> ${outdir}/output_logs.txt
+echo "Pipeline finished successfully! (Elapsed time: "$elapsed_h"h "$elapsed_m"m)"
