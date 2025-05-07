@@ -7,10 +7,10 @@
 # >>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>
 # REQUIREMENTS:
 # 1. QIIME 2: Installed and activated in the appropriate environment.
-# 2. Classifier Directory: A pre-trained classifier and reference sequences must be available in the specified directory.
-# 3. Chopper: For quality filtering of FASTQ files.
-# 4. Vsearch: For converting FASTQ to FASTA and additional filtering.
-# 5. Custom Script: `create_feature_table.py` for constructing feature tables.
+# 2. Classifier Directory: Reference sequences and reference taxonomy OR a pre-trained classifier must be available in the specified directory.
+# 3. Guppy: For demultiplexing and basecalling of raw FASTQ files.
+# 4. Cutadapt: For trimming primer binding sites from the sequences.
+# 5. Chopper: For quality filtering of FASTQ files.
 # 6. Parallel: For efficient parallel processing of classification tasks.
 # 7. SeqKit: For subsampling FASTA files with high sequence counts.
 
@@ -108,7 +108,7 @@ freq_filt=2 # taxonomic classifications with total frequency less than this will
 output_dir=$(readlink -f "${input_dir}/../outputs_$(basename "$input_dir")") # Directory name to save results (will be created if it doesn't exist)
 
 # Parse command-line arguments
-while getopts "i:dq:l:x:p:m:t:s:u:r:y:c:z:f:o:h" opt; do
+while getopts "i:dq:l:x:p:m:t:s:w:u:r:y:c:z:f:o:h" opt; do
   case $opt in
     i) input_dir="$OPTARG" ;;
     d) demultiplexed="true" ;;
@@ -119,6 +119,7 @@ while getopts "i:dq:l:x:p:m:t:s:u:r:y:c:z:f:o:h" opt; do
     m) min_reads="$OPTARG" ;;
     t) subsample_threshold="$OPTARG" ;;
     s) script_dir="$OPTARG" ;;
+    w) resource_dir="$OPTARG" ;;
     u) primer_seqs="$OPTARG" ;;
     r) reference_seqs="$OPTARG" ;;
     y) reference_taxonomy="$OPTARG" ;;
