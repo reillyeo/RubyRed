@@ -30,4 +30,4 @@ Options:
          -f      minimum frequency filter for taxonomic classifications (default: 2)                
          -o      directory name to save results (will be created if it doesn't exist). (default: outputs_{name of input directory} )                
          -h      display this help message and exit
-´´´
+
