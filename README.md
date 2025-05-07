@@ -8,6 +8,8 @@ Next, all filtered reads are concatenated and imported into [QIIME2](https://doc
 
 For taxonomic assignment, the pipeline supports three classification methods: scikit-learn, VSEARCH, and BLAST. The scikit-learn method requires a pre-trained classifier, but is considerably faster than either of the other methods. Classifications with low confidence or rare occurrence (below a user-defined frequency threshold) are filtered to reduce noise in the final dataset. The end products include a taxonomically annotated feature table and representative sequences.
 
+## Usage
+
 ```text
 Usage - RubyRed [OPTIONS]
                  
