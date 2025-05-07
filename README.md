@@ -8,6 +8,24 @@ Next, all filtered reads are concatenated and imported into [QIIME2](https://doc
 
 For taxonomic assignment, the pipeline supports three classification methods: scikit-learn, VSEARCH, and BLAST. The scikit-learn method requires a pre-trained classifier, but is considerably faster than either of the other methods. Low abundance classifications (below a user-defined frequency threshold) are filtered to reduce noise in the final dataset. The end products include a taxonomically annotated feature table and representative sequences.
 
+
+## Installation
+
+Install RubyRed by cloning or forking this repository. (Note: the paths used by the default parameters assume that the RubyRed directory exists at the location $HOME/my_scripts/RubyRed). 
+
+Guppy barcoder binary is required if you want RubyRed to demultiplex your data. Otherwise, demultiplex prior to starting, and use -d flag.
+
+QIIME2 amplicon distribution must be downloaded in a conda environment called qiime2:
+
+    conda env create -n qiime2 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-osx-conda.yml
+
+Activate your qiime2 environment and install Chopper and SeqKit:
+
+  conda activate qiime2
+  conda install -c bioconda chopper seqkit
+
+All other required packages are already included in QIIME2.
+
 ## Usage
 
 ```text
@@ -32,4 +50,10 @@ Options:
          -f      minimum frequency filter for taxonomic classifications (default: 2)                
          -o      directory name to save results (will be created if it doesn't exist). (default: outputs_{name of input directory} )                
          -h      display this help message and exit
+
+
+
+
+
+
 
