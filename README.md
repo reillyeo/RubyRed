@@ -13,6 +13,8 @@ For taxonomic assignment, the pipeline supports three classification methods: sc
 
 Install RubyRed by cloning or forking this repository. (Note: the paths used by the default parameters assume that the RubyRed directory exists at the location $HOME/my_scripts/RubyRed). 
 
+The fasta file containing primer sequences should be edited/replaced with whatever primer sequences you used.  
+
 The Guppy barcoder binary is required to be downloaded and added to your $PATH if you want RubyRed to demultiplex your data. Otherwise, demultiplex prior to starting, and use -d flag.
 
 QIIME2 amplicon distribution must be downloaded in a conda environment called qiime2:
