@@ -1,0 +1,9 @@
+# RubyRed
+
+Custom bioinformatics pipeline designed for high-throughput, read-by-read taxonomic classification of rRNA gene amplicons generated via Oxford Nanopore sequencing. RubyRed uses open-source tools and custom scripts to process raw sequencing data into taxonomically annotated feature tables suitable for downstream data analysis.
+
+Input data can be either raw or demultiplexed FASTQ files. Demultiplexing (if necessary) is done using Guppy Barcoder, trimming of primer binding regions with [Cutadapt](https://github.com/marcelm/cutadapt), quality and length filtering with [Chopper](https://github.com/wdecoster/chopper), and subsequently converted to FASTA format using [VSEARCH](https://github.com/torognes/vsearch). To ensure data consistency, sequences with fewer than a minimum read count are discarded, and samples exceeding a predefined threshold are subsampled using [SeqKit](https://github.com/shenwei356/seqkit).
+
+Next, all filtered reads are concatenated and imported into [QIIME2](https://docs.qiime2.org) as a single sequence artifact. A custom Python script is then employed to generate a feature table. Chimera removal is performed using VSEARCH’s uchime-ref algorithm against a curated rRNA gene reference database, and surviving sequences are reoriented with [RESCRIPt](https://github.com/bokulich-lab/RESCRIPt) to match reference strand orientation.
+
+For taxonomic assignment, the pipeline supports three classification strategies: scikit-learn, VSEARCH, and BLAST. The scikit-learn method requires a pre-trained classifier, but is considerably faster than either of the other methods. Classifications with low confidence or rare occurrence (below a user-defined frequency threshold) are filtered to reduce noise in the final dataset. The end products include a taxonomically annotated feature table and representative sequences.
