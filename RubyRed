@@ -28,9 +28,28 @@ validate_paths() {
         echo "Error: Input directory not found at $input_dir" >&2
         exit 1
     fi
-    if [ ! -f "$classifier" ]; then
-        echo "Error: Classifier not found at $classifier" >&2
+    if [ ! -d "$output_dir" ]; then
+        echo "Output directory not found, creating $output_dir"
+        mkdir -p $output_dir
+    fi
+    if [ ! -d "$resource_dir" ]; then
+        echo "Error: Resource directory not found at $resource_dir" >&2
         exit 1
+    fi
+    if [ ! -d "$script_dir" ]; then
+        echo "Error: Script directory not found at $script_dir" >&2
+        exit 1
+    fi
+    if [ $classification_method == "sklearn" ]; then
+        if [ ! -f "$classifier" ]; then
+            echo "Error: Classifier not found at $classifier" >&2
+            exit 1
+        fi
+    else
+        if [ ! -f "$reference_taxonomy" ]; then
+            echo "Error: Reference taxonomy not found at $reference_taxonomy" >&2
+            exit 1
+        fi
     fi
     if [ ! -f "$reference_seqs" ]; then
         echo "Error: Reference sequences not found at $reference_seqs" >&2
@@ -40,13 +59,20 @@ validate_paths() {
         echo "Error: create_feature_table.py not found at ${script_dir}" >&2
         exit 1
     fi
+    if [ ! -f "${script_dir}/taxa_fasta.py" ]; then
+        echo "Error: taxa_fasta.py not found at ${script_dir}" >&2
+        exit 1
+    fi
+    if [ ! -f "$primer_seqs" ]; then
+        echo "Error: Primer sequences not found at $primer_seqs" >&2
+        exit 1
+    fi
 }
 # Function to log messages
 log() {
     local timestamp=$(date "+%Y-%m-%d %H:%M:%S")
     echo -e "[$timestamp] $1" | tee -a $log_file
 }
-
 # Function to create checkpoints
 create_checkpoint() {
   echo "CHECKPOINT=$1" > .checkpoint
@@ -71,11 +97,12 @@ len_max=1200 # Maximum read length for chopper
 n_parallel=20 # Number of threads to use for parallel processing
 min_reads=100 # Minimum number of reads (post-filtering) to keep a file 
 subsample_threshold=30000 # Subsample fasta files with more than this number of reads
-script_dir="$HOME/my_scripts" # Directory where python scripts and classifier directory are located
-primer_seqs="$script_dir/UMI16s_primers.fasta" # fasta file containing primer sequences
-reference_seqs="$script_dir/classifier/MIMt_refseqs.qza" # Path to reference sequences
-reference_taxonomy="$script_dir/classifier/MIMt_tax.qza" # Path to reference taxonomy (used for vsearch or BLAST classifiers)
-classifier="$script_dir/classifier/MIMt_nb_classifier.qza" # Path to pretrained classifier for taxonomy assignment (sklearn classifier)
+script_dir="$HOME/my_scripts/RubyRed/scripts" # Directory where python scripts and classifier directory are located
+resource_dir="$HOME/my_scripts/RubyRed_resources" # Directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located
+primer_seqs="$resource_dir/UMI16s_primers.fasta" # fasta file containing primer sequences
+reference_seqs="$resource_dir/classifiers/MIMt/MIMt_refseqs.qza" # Path to reference sequences
+reference_taxonomy="$resource_dir/classifiers/MIMt/MIMt_tax.qza" # Path to reference taxonomy (used for vsearch or BLAST classifiers)
+classifier="$resource_dir/classifiers/MIMt/MIMt_nb_classifier.qza" # Path to pretrained classifier for taxonomy assignment (sklearn classifier)
 classification_method="sklearn" # Classification method to use (sklearn, vsearch, or blast)
 freq_filt=2 # taxonomic classifications with total frequency less than this will be removed from final output
 output_dir=$(readlink -f "${input_dir}/../outputs_$(basename "$input_dir")") # Directory name to save results (will be created if it doesn't exist)
@@ -150,7 +177,6 @@ set -e
 
 # validate paths to required files, create output directory, and log file
 validate_paths
-mkdir -p $output_dir
 touch ${output_dir}/pipeline.log
 log_file=$(readlink -f ${output_dir}/pipeline.log)
 
