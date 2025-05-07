@@ -21,8 +21,9 @@ QIIME2 amplicon distribution must be downloaded in a conda environment called qi
 
 Activate your qiime2 environment and install Chopper and SeqKit:
 
-  conda activate qiime2
-  conda install -c bioconda chopper seqkit
+     conda activate qiime2
+     conda install -c bioconda chopper seqkit
+     conda deactivate
 
 All other required packages are already included in QIIME2.
 
