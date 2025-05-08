@@ -158,7 +158,7 @@ done
 # Check if qiime2 environment is active
 current_environment=$(conda env list | grep "\*" | awk -F' ' '{print $1}')
 if [[ $current_environment != "qiime2" ]]; then
-    conda activate qiime2
+    source activate qiime2
 fi
 
 # Check for required dependencies

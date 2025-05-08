@@ -1,3 +1,2 @@
-resources/classifiers/GG_lambda
-resources/classifiers/GTDB
-resources/classifiers/NCBI_refseq_16s
+resources/classifiers/*
+!resources/classifiers/MIMt_16s
