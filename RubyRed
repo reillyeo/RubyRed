@@ -225,9 +225,9 @@ else
     echo "$files_no FASTQ files to be demultiplexed."
     echo ""
     echo "Running guppy_barcoder..."
-    guppy_barcoder -i ./ -s ../demultiplexed_data -t $n_parallel --barcode_kits SQK16S-GXO192 -r
+    guppy_barcoder -i ./ -s demultiplexed_data -t $n_parallel --barcode_kits SQK16S-GXO192 -r
     echo "All data demultiplexed"
-    cd ../demultiplexed_data
+    cd demultiplexed_data
 fi
 echo "Concatenating demultiplexed FASTQ files..."
 for folder in BRK*; do
@@ -257,8 +257,8 @@ echo "Filtering and converting FASTQ to FASTA..."
 parallel --max-procs $n_parallel --no-notice "chopper -i {} -q $qfilt --headcrop 30 --tailcrop 30 > filt_$(basename {})" ::: BRK*.fq
 parallel --max-procs $n_parallel --no-notice "vsearch --fastq_filter {} --fastaout {.}.fa --fastq_qmax 90 --relabel \$(basename {} | sed 's/^filt_//; s/.fq//')_" ::: filt*.fq
 # Organize filtered FASTA files
-mkdir -p ../filt_fasta 
-mv *.fa ../filt_fasta/
+mkdir -p ${output_dir}/filt_fasta 
+mv *.fa ${output_dir}/filt_fasta/
 #clean fastq
 if [ $? -eq 0 ]; then
     echo "All filtering jobs completed successfully. Removing intermediate FASTQ files..."
@@ -266,10 +266,10 @@ if [ $? -eq 0 ]; then
 else
     echo "Error during filtering. Keeping intermediate FASTQ files for debugging."
 fi
-post_filt_seqs=$(cat ../filt_fasta/*.fa | grep -c ">")
+post_filt_seqs=$(cat ${output_dir}/filt_fasta/*.fa | grep -c ">")
 log "Number of sequences removed by quality and read-length filtering: $(($pre_filt_seqs - $post_filt_seqs)) "
 echo "Checking FASTA file sizes..."
-cd ../filt_fasta/
+cd ${output_dir}/filt_fasta/
 # remove empty files
 for file in *.fa; do
     if [ "$(grep -c ">" "$file")" -eq 0 ]; then
@@ -305,8 +305,8 @@ for file in filt_*.fa; do
     fi
 done
 echo "Concatenating all FASTA files"
-cat *.fna > ../all_data.fna
-cd ..
+cat *.fna > ${output_dir}/all_data.fna
+cd ${output_dir}
 post_sizecheck_seqs=$(grep -c ">" all_data.fna)
 log "Number of sequences removed by read number filtering and subsampling: $(($post_filt_seqs - $post_sizecheck_seqs)) "
 # remove intermediate files
@@ -321,7 +321,7 @@ fi
 
 
 ############ Step 3: Create Feature Table ############
-cd $input_dir/../
+cd ${output_dir}
 echo "Importing data into QIIME..."
 qiime tools import \
     --type "FeatureData[Sequence]" \
