@@ -210,224 +210,231 @@ log "Run parameters:\
 
 
 # Check if the script is being resumed from a checkpoint
-if resume_from_checkpoint; then
-  log "Resuming pipeline from checkpoint: $CHECKPOINT "
+# if resume_from_checkpoint; then
+#   log "Resuming pipeline from checkpoint: $CHECKPOINT "
+# else
+#   log "Starting pipeline from beginning.."
+# fi
+
+# Adding capability to resume from feature classification step, as often crashes at this step
+if [ -f "${output_dir}/oriented_feat_tab.qza" ]; then
+    log "Pipeline restarting from feature classification step"
+    cd ${output_dir}
+    reoriented_seqs=$(qiime tools inspect-metadata oriented_seqs.qza | awk '{if ($1=="IDS:") {print $2}}')
+    continue
 else
-  log "Starting pipeline from beginning.."
-fi
-
-
 ############ Step 1: Demultiplexing ############
-cd $input_dir
-if [ $demultiplexed == "true" ]; then
-    echo "Data already demultiplexed, skipping this step."
-else
-    files_no=$(ls *fastq* | wc -l)
-    echo ""
-    echo "$files_no FASTQ files to be demultiplexed."
-    echo ""
-    echo "Running guppy_barcoder..."
-    guppy_barcoder -i ./ -s demultiplexed_data -t $n_parallel --barcode_kits SQK16S-GXO192 -r
-    echo "All data demultiplexed"
-    cd demultiplexed_data
-fi
-echo "Concatenating demultiplexed FASTQ files..."
-for folder in BRK*; do
-    if [ -d $folder ]; then
-        echo "$folder is a directory, concatenating files... "
-        cat ${folder}/*.fastq > ${folder}.fastq
-        rm -r $folder
-    elif
-        [ -f $folder ]; then
-        echo "$folder is a file, skipping concatenation"
+    cd $input_dir
+    if [ $demultiplexed == "true" ]; then
+        echo "Data already demultiplexed, skipping this step."
     else
-        echo "$folder is not valid"
+        files_no=$(ls *fastq* | wc -l)
+        echo ""
+        echo "$files_no FASTQ files to be demultiplexed."
+        echo ""
+        echo "Running guppy_barcoder..."
+        guppy_barcoder -i ./ -s demultiplexed_data -t $n_parallel --barcode_kits SQK16S-GXO192 -r
+        echo "All data demultiplexed"
+        cd demultiplexed_data
     fi
-done
-pre_filt_seqs=$(cat *.fastq | wc -l | awk '{print int($1/4)}')
-log "Number of succesfully demultiplexed sequences: $pre_filt_seqs "
-#####################################################
+    echo "Concatenating demultiplexed FASTQ files..."
+    for folder in BRK*; do
+        if [ -d $folder ]; then
+            echo "$folder is a directory, concatenating files... "
+            cat ${folder}/*.fastq > ${folder}.fastq
+            rm -r $folder
+        elif
+            [ -f $folder ]; then
+            echo "$folder is a file, skipping concatenation"
+        else
+            echo "$folder is not valid"
+        fi
+    done
+    pre_filt_seqs=$(cat *.fastq | wc -l | awk '{print int($1/4)}')
+    log "Number of succesfully demultiplexed sequences: $pre_filt_seqs "
+    #####################################################
 
 
 
-############ Step 2: Trimming, Filtering and subsampling ############
-echo "Trimming primer binding sites with cutadapt..."
-parallel --max-procs $n_parallel --no-notice "cutadapt -g file:${primer_seqs} -a file:${primer_seqs} -m $len_min -M $len_max -o {.}.fq {} --revcomp --discard-untrimmed --report=minimal" ::: BRK*.fastq
-mkdir -p ${output_dir}/demux_data_backup
-mv BRK*.fastq ${output_dir}/demux_data_backup/
-echo "Filtering and converting FASTQ to FASTA..."
-parallel --max-procs $n_parallel --no-notice "chopper -i {} -q $qfilt --headcrop 30 --tailcrop 30 > filt_$(basename {})" ::: BRK*.fq
-parallel --max-procs $n_parallel --no-notice "vsearch --fastq_filter {} --fastaout {.}.fa --fastq_qmax 90 --relabel \$(basename {} | sed 's/^filt_//; s/.fq//')_" ::: filt*.fq
-# Organize filtered FASTA files
-mkdir -p ${output_dir}/filt_fasta 
-mv *.fa ${output_dir}/filt_fasta/
-#clean fastq
-if [ $? -eq 0 ]; then
-    echo "All filtering jobs completed successfully. Removing intermediate FASTQ files..."
-    rm *.fq
-else
-    echo "Error during filtering. Keeping intermediate FASTQ files for debugging."
-fi
-post_filt_seqs=$(cat ${output_dir}/filt_fasta/*.fa | grep -c ">")
-log "Number of sequences removed by quality and read-length filtering: $(($pre_filt_seqs - $post_filt_seqs)) "
-echo "Checking FASTA file sizes..."
-cd ${output_dir}/filt_fasta/
-# remove empty files
-for file in *.fa; do
-    if [ "$(grep -c ">" "$file")" -eq 0 ]; then
-        echo "Removing $file (Reads: 0)"
-        rm "$file"
-        continue
-    fi
-done    
-# remove small files and subsample large files
-for file in *.fa; do
-    num_sequences=$(grep -c ">" "$file")
-    if [ "$num_sequences" -lt "$min_reads" ]; then
-        echo "Removing $file due to low read number (Reads: $num_sequences)"
-        rm "$file"
-    elif [ "$num_sequences" -gt "$subsample_threshold" ]; then
-        echo "Subsampling $file to $subsample_threshold reads removing original (Reads: $num_sequences)"
-        seqkit sample -n $subsample_threshold "$file" > "${file%.fa}_subsampled.fa"
-        rm "$file" 
+    ############ Step 2: Trimming, Filtering and subsampling ############
+    echo "Trimming primer binding sites with cutadapt..."
+    parallel --max-procs $n_parallel --no-notice "cutadapt -g file:${primer_seqs} -a file:${primer_seqs} -m $len_min -M $len_max -o {.}.fq {} --revcomp --discard-untrimmed --report=minimal" ::: BRK*.fastq
+    mkdir -p ${output_dir}/demux_data
+    mv BRK*.fastq ${output_dir}/demux_data/
+    echo "Filtering and converting FASTQ to FASTA..."
+    parallel --max-procs $n_parallel --no-notice "chopper -i {} -q $qfilt --headcrop 30 --tailcrop 30 > filt_$(basename {})" ::: BRK*.fq
+    parallel --max-procs $n_parallel --no-notice "vsearch --fastq_filter {} --fastaout {.}.fa --fastq_qmax 90 --relabel \$(basename {} | sed 's/^filt_//; s/.fq//')_" ::: filt*.fq
+    # Organize filtered FASTA files
+    mkdir -p ${output_dir}/filt_fasta 
+    mv *.fa ${output_dir}/filt_fasta/
+    #clean fastq
+    if [ $? -eq 0 ]; then
+        echo "All filtering jobs completed successfully. Removing intermediate FASTQ files..."
+        rm *.fq
     else
-        echo "$file has an acceptable number of sequences: $num_sequences"
+        echo "Error during filtering. Keeping intermediate FASTQ files for debugging."
     fi
-done
-echo "FASTA file size check completed."
-# Rename and concatenate filtered FASTA files
-echo "Renaming filtered FASTA files"
-for file in filt_*.fa; do
-    new_name=$(echo "$file" | grep -oP '(?<=filt_).*?(?=_subsampled|\.fa)' | sed 's/$/.fna/')
-    if [ -n "$new_name" ]; then
-        mv "$file" "$new_name"
-        echo "Renamed $file to $new_name"
+    post_filt_seqs=$(cat ${output_dir}/filt_fasta/*.fa | grep -c ">")
+    log "Number of sequences removed by quality and read-length filtering: $(($pre_filt_seqs - $post_filt_seqs)) "
+    echo "Checking FASTA file sizes..."
+    cd ${output_dir}/filt_fasta/
+    # remove empty files
+    for file in *.fa; do
+        if [ "$(grep -c ">" "$file")" -eq 0 ]; then
+            echo "Removing $file (Reads: 0)"
+            rm "$file"
+            continue
+        fi
+    done    
+    # remove small files and subsample large files
+    for file in *.fa; do
+        num_sequences=$(grep -c ">" "$file")
+        if [ "$num_sequences" -lt "$min_reads" ]; then
+            echo "Removing $file due to low read number (Reads: $num_sequences)"
+            rm "$file"
+        elif [ "$num_sequences" -gt "$subsample_threshold" ]; then
+            echo "Subsampling $file to $subsample_threshold reads removing original (Reads: $num_sequences)"
+            seqkit sample -n $subsample_threshold "$file" > "${file%.fa}_subsampled.fa"
+            rm "$file" 
+        else
+            echo "$file has an acceptable number of sequences: $num_sequences"
+        fi
+    done
+    echo "FASTA file size check completed."
+    # Rename and concatenate filtered FASTA files
+    echo "Renaming filtered FASTA files"
+    for file in filt_*.fa; do
+        new_name=$(echo "$file" | grep -oP '(?<=filt_).*?(?=_subsampled|\.fa)' | sed 's/$/.fna/')
+        if [ -n "$new_name" ]; then
+            mv "$file" "$new_name"
+            echo "Renamed $file to $new_name"
+        else
+            echo "No match for $file"
+        fi
+    done
+    echo "Concatenating all FASTA files"
+    cat *.fna > ${output_dir}/all_data.fna
+    cd ${output_dir}
+    post_sizecheck_seqs=$(grep -c ">" all_data.fna)
+    log "Number of sequences removed by read number filtering and subsampling: $(($post_filt_seqs - $post_sizecheck_seqs)) "
+    # remove intermediate files
+    if [ -f "all_data.fna" ]; then
+        echo "All data successfully concatenated, removing filt_fasta directory"
+        rm -r filt_fasta
     else
-        echo "No match for $file"
+        echo "Failed to concatenate data"
     fi
-done
-echo "Concatenating all FASTA files"
-cat *.fna > ${output_dir}/all_data.fna
-cd ${output_dir}
-post_sizecheck_seqs=$(grep -c ">" all_data.fna)
-log "Number of sequences removed by read number filtering and subsampling: $(($post_filt_seqs - $post_sizecheck_seqs)) "
-# remove intermediate files
-if [ -f "all_data.fna" ]; then
-    echo "All data successfully concatenated, removing filt_fasta directory"
-    rm -r filt_fasta
-else
-    echo "Failed to concatenate data"
-fi
-######################################################
+    ######################################################
 
 
 
-############ Step 3: Create Feature Table ############
-cd ${output_dir}
-echo "Importing data into QIIME..."
-qiime tools import \
-    --type "FeatureData[Sequence]" \
-    --input-path all_data.fna \
-    --output-path all_data.qza
-if [ -f 'all_data.qza' ]; then
-    rm all_data.fna
-else
-    echo "Data import to QIIME2 failed"
-fi
-qiime tools export \
-    --input-path all_data.qza \
-    --output-path all_data
+    ############ Step 3: Create Feature Table ############
+    cd ${output_dir}
+    echo "Importing data into QIIME..."
+    qiime tools import \
+        --type "FeatureData[Sequence]" \
+        --input-path all_data.fna \
+        --output-path all_data.qza
+    if [ -f 'all_data.qza' ]; then
+        rm all_data.fna
+    else
+        echo "Data import to QIIME2 failed"
+    fi
+    qiime tools export \
+        --input-path all_data.qza \
+        --output-path all_data
 
-python ${script_dir}/create_feature_table.py all_data/dna-sequences.fasta all_data.tsv
-biom convert \
-    --input-fp all_data.tsv \
-    --output-fp all_data.biom \
-    --table-type="OTU table" \
-    --to-hdf5
+    python ${script_dir}/create_feature_table.py all_data/dna-sequences.fasta all_data.tsv
+    biom convert \
+        --input-fp all_data.tsv \
+        --output-fp all_data.biom \
+        --table-type="OTU table" \
+        --to-hdf5
 
-qiime tools import \
-    --type 'FeatureTable[Frequency]' \
-    --input-path all_data.biom \
-    --output-path feat_tab.qza
+    qiime tools import \
+        --type 'FeatureTable[Frequency]' \
+        --input-path all_data.biom \
+        --output-path feat_tab.qza
 
-if [ -f "feat_tab.qza" ]; then
-    echo "Feature table created successfully"
-    rm -r all_data.tsv all_data.biom all_data/
-else
-    echo "Failed to create feature table"
-fi
-########################################################
-
-
-
-############ Step 4: Detect and remove chimeric sequences ############
-echo "searching for chimeric sequences..."
-qiime vsearch uchime-ref \
-    --i-table feat_tab.qza \
-    --i-sequences all_data.qza \
-    --i-reference-sequences $reference_seqs \
-    --o-nonchimeras seqs_nonchimeric.qza \
-    --output-dir uchime \
-    --p-threads $n_parallel
-
-
-if [ -f "seqs_nonchimeric.qza" ]; then
-    echo "Chimera filtering completed"
-    rm all_data.qza
-    rm feat_tab.qza
-    rm -r uchime
-else
-    echo "Chimera filtering failed"
-fi
-non_chimeric_seqs=$(qiime tools inspect-metadata seqs_nonchimeric.qza | awk '{if ($1=="IDS:") print $2}')
-
-log "Number of sequences removed by chimera filtering: $(($post_sizecheck_seqs - $non_chimeric_seqs)) "
-########################################################
+    if [ -f "feat_tab.qza" ]; then
+        echo "Feature table created successfully"
+        rm -r all_data.tsv all_data.biom all_data/
+    else
+        echo "Failed to create feature table"
+    fi
+    ########################################################
 
 
 
-########### Step 5: Reorient Sequences ############
-echo "Orienting all reads..."
-qiime rescript orient-seqs \
-    --i-sequences seqs_nonchimeric.qza \
-    --i-reference-sequences $reference_seqs  \
-    --o-oriented-seqs oriented_seqs.qza \
-    --o-unmatched-seqs unmatched_seqs.qza \
-    --p-threads $n_parallel
+    ############ Step 4: Detect and remove chimeric sequences ############
+    echo "searching for chimeric sequences..."
+    qiime vsearch uchime-ref \
+        --i-table feat_tab.qza \
+        --i-sequences all_data.qza \
+        --i-reference-sequences $reference_seqs \
+        --o-nonchimeras seqs_nonchimeric.qza \
+        --output-dir uchime \
+        --p-threads $n_parallel
 
-if [ -f 'oriented_seqs.qza' ]; then
-    rm seqs_nonchimeric.qza
-    rm unmatched_seqs.qza
-else
-    echo "Orientation of reads failed"
-fi
 
-reoriented_seqs=$(qiime tools inspect-metadata oriented_seqs.qza | awk '{if ($1=="IDS:") {print $2}}')
+    if [ -f "seqs_nonchimeric.qza" ]; then
+        echo "Chimera filtering completed"
+        rm all_data.qza
+        rm feat_tab.qza
+        rm -r uchime
+    else
+        echo "Chimera filtering failed"
+    fi
+    non_chimeric_seqs=$(qiime tools inspect-metadata seqs_nonchimeric.qza | awk '{if ($1=="IDS:") print $2}')
 
-log "Number of sequences unable to be matched to database when reorienting: $(($non_chimeric_seqs - $reoriented_seqs)) "
+    log "Number of sequences removed by chimera filtering: $(($post_sizecheck_seqs - $non_chimeric_seqs)) "
+    ########################################################
 
-qiime tools export \
-    --input-path oriented_seqs.qza \
-    --output-path ${output_dir}/rep_seqs
 
-python ${script_dir}/create_feature_table.py ${output_dir}/rep_seqs/dna-sequences.fasta oriented_data.tsv
 
-biom convert \
-    --input-fp oriented_data.tsv \
-    --output-fp oriented_data.biom \
-    --table-type="OTU table" \
-    --to-hdf5
+    ########### Step 5: Reorient Sequences ############
+    echo "Orienting all reads..."
+    qiime rescript orient-seqs \
+        --i-sequences seqs_nonchimeric.qza \
+        --i-reference-sequences $reference_seqs  \
+        --o-oriented-seqs oriented_seqs.qza \
+        --o-unmatched-seqs unmatched_seqs.qza \
+        --p-threads $n_parallel
 
-qiime tools import \
-    --type 'FeatureTable[Frequency]' \
-    --input-path oriented_data.biom \
-    --output-path oriented_feat_tab.qza
+    if [ -f 'oriented_seqs.qza' ]; then
+        rm seqs_nonchimeric.qza
+        rm unmatched_seqs.qza
+    else
+        echo "Orientation of reads failed"
+    fi
 
-if [ -f "oriented_feat_tab.qza" ]; then
-    echo "Feature table created successfully"
-    rm -r oriented_data.tsv oriented_data.biom 
-else
-    echo "Failed to create feature table"
+    reoriented_seqs=$(qiime tools inspect-metadata oriented_seqs.qza | awk '{if ($1=="IDS:") {print $2}}')
+
+    log "Number of sequences unable to be matched to database when reorienting: $(($non_chimeric_seqs - $reoriented_seqs)) "
+
+    qiime tools export \
+        --input-path oriented_seqs.qza \
+        --output-path ${output_dir}/rep_seqs
+
+    python ${script_dir}/create_feature_table.py ${output_dir}/rep_seqs/dna-sequences.fasta oriented_data.tsv
+
+    biom convert \
+        --input-fp oriented_data.tsv \
+        --output-fp oriented_data.biom \
+        --table-type="OTU table" \
+        --to-hdf5
+
+    qiime tools import \
+        --type 'FeatureTable[Frequency]' \
+        --input-path oriented_data.biom \
+        --output-path oriented_feat_tab.qza
+
+    if [ -f "oriented_feat_tab.qza" ]; then
+        echo "Feature table created successfully"
+        rm -r oriented_data.tsv oriented_data.biom 
+    else
+        echo "Failed to create feature table"
+    fi
 fi
 ########################################################
 
@@ -538,7 +545,7 @@ parallel --max-procs $n_parallel --no-notice "gzip {} " ::: ${output_dir}/rep_se
 
 taxa=$(wc -l ${output_dir}/final_feature_table/*.tsv | awk '{print $1-1}')
 
-log "$non_chimeric_seqs sequences classified into $taxa distinct taxonomical clusters"
+log "$reoriented_seqs sequences classified into $taxa distinct taxonomical clusters"
 ###################################################
 
 
