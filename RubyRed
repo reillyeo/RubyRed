@@ -221,7 +221,6 @@ if [ -f "${output_dir}/oriented_feat_tab.qza" ]; then
     log "Pipeline restarting from feature classification step"
     cd ${output_dir}
     reoriented_seqs=$(qiime tools inspect-metadata oriented_seqs.qza | awk '{if ($1=="IDS:") {print $2}}')
-    continue
 else
 ############ Step 1: Demultiplexing ############
     cd $input_dir
