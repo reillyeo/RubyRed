@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+title: RubyRed
+message: >-
+  If you use this pipeline, please consider citing it as
+  below
+type: software
+authors:
+  - given-names: Eoghan
+    family-names: Reilly
+    email: reillyeo@tcd.ie
+    affiliation: University of Copenhagen
+repository-code: 'https://github.com/reillyeo/RubyRed'
+abstract: >-
+  Custom bioinformatics pipeline for read-by-read analysis
+  of ONT-generated amplicon sequencing data
+keywords:
+  - 16S
+  - amplicon sequencing
+commit: cdfc60aa9265aa27ec130b4f51513c6f2799bd36
+date-released: '2025-05-09'
