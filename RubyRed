@@ -486,16 +486,20 @@ else
     echo "Failed to collapse taxonomy"
 fi
 # Filter out low frequency taxonomic classifications
-echo "Removing low frequency taxonomic classifications..."
-qiime feature-table filter-features \
-    --i-table L7.qza \
-    --p-min-frequency $freq_filt \
-    --o-filtered-table L7_filt.qza
-if [ -f "L7_filt.qza" ]; then
-    echo "Low frequency taxonomic classifications removed"
-    rm L7.qza
+if [ $freq_filt -lt 2 ]; then
+    mv L7.qza L7_filt.qza
 else
-    echo "Failed to remove low frequency taxonomic classifications"
+    echo "Removing low frequency taxonomic classifications..."
+    qiime feature-table filter-features \
+        --i-table L7.qza \
+        --p-min-frequency $freq_filt \
+        --o-filtered-table L7_filt.qza
+    if [ -f "L7_filt.qza" ]; then
+        echo "Low frequency taxonomic classifications removed"
+        rm L7.qza
+    else
+        echo "Failed to remove low frequency taxonomic classifications"
+    fi
 fi
 # create barplot visualisation of taxonomic classification
 qiime taxa barplot \
