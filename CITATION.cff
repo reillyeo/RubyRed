@@ -9,6 +9,10 @@ authors:
     family-names: Reilly
     email: reillyeo@tcd.ie
     affiliation: University of Copenhagen
+  - given-names: Łukasz
+    family-names: Krych
+    email: krych@food.ku.dk
+    affiliation: University of Copenhagen
 repository-code: 'https://github.com/reillyeo/RubyRed'
 abstract: >-
   Custom bioinformatics pipeline for read-by-read analysis
