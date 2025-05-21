@@ -45,10 +45,10 @@ Options:
          -s      directory where python scripts are located (default: $HOME/my_scripts/RubyRed/scripts)                
          -w      path to the directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located (default: $HOME/my_scripts/RubyRed/resources)                
          -u      path to fasta file containing primer sequences (default: $HOME/my_scripts/RubyRed/resources/UMI16s_primers.fasta)                
-         -r      path to reference sequences for chimera filtering and reorientation (default: $HOME/my_scripts/RubyRed/resources/classifiers/MIMt/MIMt_refseqs.qza)                
-         -y      path to reference taxonomy for vsearch/blast classifier (default: $HOME/my_scripts/RubyRed/resources/classifiers/MIMt/MIMt_taxonomy.qza)                
+         -r      path to reference sequences for chimera filtering and reorientation (default: $HOME/my_scripts/RubyRed/resources/classifiers/MIMt_16s/MIMt_16s_refseqs.qza)                
+         -y      path to reference taxonomy for vsearch/blast classifier (default: $HOME/my_scripts/RubyRed/resources/classifiers/MIMt_16s/MIMt_16s_taxonomy.qza)                
          -z      classification method to use (sklearn, vsearch, or blast) (default: sklearn)                
-         -c      path to the classifier for taxonomy assignment (default: $HOME/my_scripts/RubyRed/resources/classifiers/MIMt/MIMt_nb_classifier.qza)                
+         -c      path to the classifier for taxonomy assignment (default: $HOME/my_scripts/RubyRed/resources/classifiers/MIMt_16s/MIMt_16s_classifier.qza)                
          -f      minimum frequency filter for taxonomic classifications (default: 2)                
          -o      directory name to save results (will be created if it doesn't exist). (default: outputs_{name of input directory} )                
          -h      display this help message and exit
