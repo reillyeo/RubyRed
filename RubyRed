@@ -448,7 +448,7 @@ if [ "$classification_method" == "sklearn" ]; then
         --i-classifier $classifier \
         --o-classification taxonomy.qza  \
         --p-confidence 0.9  \
-        --p-n-jobs $n_parallel
+        --p-n-jobs 2
 elif [ "$classification_method" == "vsearch" ]; then
     echo "Using vsearch classifier"
     qiime feature-classifier classify-consensus-vsearch \
