@@ -258,6 +258,8 @@ else
     ############ Step 2: Trimming, Filtering and subsampling ############
     echo "Trimming primer binding sites with cutadapt..."
     parallel --max-procs $n_parallel --no-notice "cutadapt -g file:${primer_seqs} -a file:${primer_seqs} -m $len_min -M $len_max -o {.}.fq {} --revcomp --discard-untrimmed --report=minimal" ::: BRK*.fastq
+    seqs_after_trimming=$(cat *.fq | wc -l | awk '{print int($1/4)}')
+    log "Number of sequences discarded due to lack of primers or incorrect length after trimming: $(($pre_filt_seqs - $seqs_after_trimming))"
     mkdir -p ${output_dir}/demux_data
     mv BRK*.fastq ${output_dir}/demux_data/
     echo "Filtering and converting FASTQ to FASTA..."
@@ -274,7 +276,7 @@ else
         echo "Error during filtering. Keeping intermediate FASTQ files for debugging."
     fi
     post_filt_seqs=$(cat ${output_dir}/filt_fasta/*.fa | grep -c ">")
-    log "Number of sequences removed by quality and read-length filtering: $(($pre_filt_seqs - $post_filt_seqs)) "
+    log "Number of sequences removed by quality and read-length filtering: $(($seqs_after_trimming - $post_filt_seqs)) "
     echo "Checking FASTA file sizes..."
     cd ${output_dir}/filt_fasta/
     # remove empty files
