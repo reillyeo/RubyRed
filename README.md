@@ -15,7 +15,7 @@ Install RubyRed by cloning this repository. (Note: the paths used by the default
 
 The fasta file containing primer sequences should be edited/replaced with whatever primer sequences you used.  
 
-The Guppy barcoder binary is required to be downloaded and added to your $PATH if you want RubyRed to demultiplex your data. Otherwise, demultiplex prior to starting, and use -d flag.
+The Guppy barcoder binary is required to be downloaded and added to your $PATH if you want RubyRed to demultiplex your data. Otherwise, demultiplex prior to starting, and use the -d flag.
 
 QIIME2 amplicon distribution must be downloaded in a conda environment called qiime2:
 
