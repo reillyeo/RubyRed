@@ -11,7 +11,7 @@ For taxonomic assignment, the pipeline supports three classification methods: sk
 
 ## Installation
 
-Install RubyRed by cloning or forking this repository. (Note: the paths used by the default parameters assume that the RubyRed directory exists at the location $HOME/my_scripts/RubyRed). 
+Install RubyRed by cloning this repository. (Note: the paths used by the default parameters assume that the RubyRed directory exists at the location $HOME/my_scripts/RubyRed). 
 
 The fasta file containing primer sequences should be edited/replaced with whatever primer sequences you used.  
 
