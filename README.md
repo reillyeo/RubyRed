@@ -19,7 +19,7 @@ The Guppy barcoder binary is required to be downloaded and added to your $PATH i
 
 QIIME2 amplicon distribution must be downloaded in a conda environment called qiime2:
 
-    conda env create -n qiime2-amplicon-2024.10 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
+    conda env create -n qiime2 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
 
 
 Activate your qiime2 environment and install Chopper and SeqKit:
