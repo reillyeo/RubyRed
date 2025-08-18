@@ -22,10 +22,11 @@ QIIME2 amplicon distribution must be downloaded in a conda environment called qi
     conda env create -n qiime2 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
 
 
-Activate your qiime2 environment and install Chopper and SeqKit:
+Activate your qiime2 environment and install chopper, SeqKit, and parallel:
 
      conda activate qiime2
      conda install -c bioconda chopper seqkit
+     conda install conda-forge::parallel
 
 All other required packages are already included in QIIME2.
 
