@@ -30,6 +30,10 @@ Activate your qiime2 environment and install chopper, SeqKit, and parallel:
 
 All other required packages are already included in QIIME2.
 
+Add RubyRed to $PATH:
+
+    export PATH="~/my_scripts/RubyRed/:$PATH"
+
 ## Usage
 
 ```text
