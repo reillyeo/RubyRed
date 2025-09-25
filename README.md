@@ -11,22 +11,28 @@ For taxonomic assignment, the pipeline supports three classification methods: sk
 
 ## Installation
 
-Install RubyRed by cloning or forking this repository. (Note: the paths used by the default parameters assume that the RubyRed directory exists at the location $HOME/my_scripts/RubyRed). 
+Install RubyRed by cloning this repository. (Note: the paths used by the default parameters assume that the RubyRed directory exists at the location $HOME/my_scripts/RubyRed). 
 
 The fasta file containing primer sequences should be edited/replaced with whatever primer sequences you used.  
 
-The Guppy barcoder binary is required to be downloaded and added to your $PATH if you want RubyRed to demultiplex your data. Otherwise, demultiplex prior to starting, and use -d flag.
+The Guppy barcoder binary is required to be downloaded and added to your $PATH if you want RubyRed to demultiplex your data. Otherwise, demultiplex prior to starting, and use the -d flag.
 
 QIIME2 amplicon distribution must be downloaded in a conda environment called qiime2:
 
-    conda env create -n qiime2 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-osx-conda.yml
+    conda env create -n qiime2 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
 
-Activate your qiime2 environment and install Chopper and SeqKit:
+
+Activate your qiime2 environment and install chopper, SeqKit, and parallel:
 
      conda activate qiime2
      conda install -c bioconda chopper seqkit
+     conda install conda-forge::parallel
 
 All other required packages are already included in QIIME2.
+
+Add RubyRed to $PATH:
+
+    export PATH="~/my_scripts/RubyRed/:$PATH"
 
 ## Usage
 
