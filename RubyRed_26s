@@ -91,18 +91,18 @@ resume_from_checkpoint() {
 # Default values for command line arguments
 input_dir=$(readlink -f "./") # Directory containing input FASTQ files
 demultiplexed="false" # Flag to indicate whether data in input directory is demultiplexed
-qfilt=15 # Quality filter for chopper   
-len_min=900 # Minimum read length for chopper
-len_max=1200 # Maximum read length for chopper
+qfilt=10 # Quality filter for chopper   
+len_min=550 # Minimum read length for chopper
+len_max=750 # Maximum read length for chopper
 n_parallel=20 # Number of threads to use for parallel processing
 min_reads=100 # Minimum number of reads (post-filtering) to keep a file 
 subsample_threshold=30000 # Subsample fasta files with more than this number of reads
 script_dir="$HOME/my_scripts/RubyRed/scripts" # Directory where python scripts and classifier directory are located
 resource_dir="$HOME/my_scripts/RubyRed/resources" # Directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located
-primer_seqs="$resource_dir/UMI16s_primers.fasta" # fasta file containing primer sequences
-reference_seqs="$resource_dir/classifiers/MIMt_16s/MIMt_16s_refseqs.qza" # Path to reference sequences
-reference_taxonomy="$resource_dir/classifiers/MIMt_16s/MIMt_16s_taxonomy.qza" # Path to reference taxonomy (used for vsearch or BLAST classifiers)
-classifier="$resource_dir/classifiers/MIMt_16s/MIMt_16s_classifier.qza" # Path to pretrained classifier for taxonomy assignment (sklearn classifier)
+primer_seqs="$resource_dir/28s_primers.fasta" # fasta file containing primer sequences
+reference_seqs="$resource_dir/classifiers/MIMt_28s/28s_seqs.qza" # Path to reference sequences
+reference_taxonomy="$resource_dir/classifiers/MIMt_28s/28s_tax.qza" # Path to reference taxonomy (used for vsearch or BLAST classifiers)
+classifier="$resource_dir/classifiers/MIMt_28s/MIMt_28s_classifier.qza" # Path to pretrained classifier for taxonomy assignment (sklearn classifier)
 classification_method="sklearn" # Classification method to use (sklearn, vsearch, or blast)
 freq_filt=2 # taxonomic classifications with total frequency less than this will be removed from final output
 output_dir=$(readlink -f "${input_dir}/../outputs_$(basename "$input_dir")") # Directory name to save results (will be created if it doesn't exist)
