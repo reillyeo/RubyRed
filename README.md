@@ -46,7 +46,7 @@ Options:
          -l      minimum read length allowed to pass chopper length filtering (default: 800)                
          -x      maximum read length allowed to pass chopper length filtering (default: 1600)                
          -p      number of threads to use for parallel processing (default: 20)                
-         -m      minimum number of reads (post-filtering) to keep a file (default: 100)                
+         -m      minimum number of reads (post-filtering) to keep a file (default: 1)                
          -t      subsample fasta files with more than this number of reads (default: 30000)                
          -s      directory where python scripts are located (default: $HOME/my_scripts/RubyRed/scripts)                
          -w      path to the directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located (default: $HOME/my_scripts/RubyRed/resources)                
