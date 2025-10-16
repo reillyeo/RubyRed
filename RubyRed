@@ -95,7 +95,7 @@ qfilt=15 # Quality filter for chopper
 len_min=900 # Minimum read length for chopper
 len_max=1200 # Maximum read length for chopper
 n_parallel=20 # Number of threads to use for parallel processing
-min_reads=100 # Minimum number of reads (post-filtering) to keep a file 
+min_reads=1 # Minimum number of reads (post-filtering) to keep a file 
 subsample_threshold=30000 # Subsample fasta files with more than this number of reads
 script_dir="$HOME/my_scripts/RubyRed/scripts" # Directory where python scripts and classifier directory are located
 resource_dir="$HOME/my_scripts/RubyRed/resources" # Directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located
@@ -138,7 +138,7 @@ while getopts "i:dq:l:x:p:m:t:s:w:u:r:y:c:z:f:o:h" opt; do
                 \n\t -l\t minimum read length allowed to pass chopper length filtering (default: 900)\
                 \n\t -x\t maximum read length allowed to pass chopper length filtering (default: 1200)\
                 \n\t -p\t number of threads to use for parallel processing (default: 20)\
-                \n\t -m\t minimum number of reads (post-filtering) to keep a file (default: 100)\
+                \n\t -m\t minimum number of reads (post-filtering) to keep a file (default: 1)\
                 \n\t -t\t subsample fasta files with more than this number of reads (default: 30000)\
                 \n\t -s\t directory where python scripts are located (default: $HOME/my_scripts/RubyRed/scripts)\
                 \n\t -w\t path to the directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located (default: $HOME/my_scripts/RubyRed/resources)\
