@@ -11,28 +11,19 @@ For taxonomic assignment, the pipeline supports three classification methods: sk
 
 ## Installation
 
-Install RubyRed by cloning this repository. (Note: the paths used by the default parameters assume that the RubyRed directory exists at the location $HOME/my_scripts/RubyRed). 
+RubyRed is developed for Linux/Unix. A conda installation is required prior to installation.
+For out-of-the-box functionality, the following lines of code should be run:
 
-The fasta file containing primer sequences should be edited/replaced with whatever primer sequences you used.  
+    mkdir ~/my_scripts
+    cd ~/my_scripts
+    git clone https://github.com/reillyeo/RubyRed
+    conda env create -n qiime2 --file  https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2024.5/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml
+    conda activate qiime2
+    conda install -c bioconda -c conda-forge chopper seqkit parallel
+    echo 'export PATH="~/my_scripts/RubyRed/:$PATH"' >> ~/.bashrc
 
-The Guppy barcoder binary is required to be downloaded and added to your $PATH if you want RubyRed to demultiplex your data. Otherwise, demultiplex prior to starting, and use the -d flag.
-
-QIIME2 amplicon distribution must be downloaded in a conda environment called qiime2:
-
-    conda env create -n qiime2 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-linux-conda.yml
-
-
-Activate your qiime2 environment and install chopper, SeqKit, and parallel:
-
-     conda activate qiime2
-     conda install -c bioconda chopper seqkit
-     conda install conda-forge::parallel
-
-All other required packages are already included in QIIME2.
-
-Add RubyRed to $PATH:
-
-    export PATH="~/my_scripts/RubyRed/:$PATH"
+If you want RubyRed to demultiplex your data, the Guppy barcoder binary is required to be downloaded and added to your $PATH. Otherwise, demultiplex prior to starting, and use the -d flag.
+The fasta file containing primer sequences should be edited/replaced with whatever primer sequences were used.  
 
 ## Usage
 
@@ -43,8 +34,8 @@ Options:
          -i      directory containing input FASTQ files (default: current directory)                
          -d      use this flag if data has already been demultiplexed                
          -q      minimum average read quality required to pass chopper quality filtering (default: 15)                
-         -l      minimum read length allowed to pass chopper length filtering (default: 800)                
-         -x      maximum read length allowed to pass chopper length filtering (default: 1600)                
+         -l      minimum read length allowed to pass chopper length filtering (default: 900)                
+         -x      maximum read length allowed to pass chopper length filtering (default: 1200)                
          -p      number of threads to use for parallel processing (default: 20)                
          -m      minimum number of reads (post-filtering) to keep a file (default: 1)                
          -t      subsample fasta files with more than this number of reads (default: 30000)                
