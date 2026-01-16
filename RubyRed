@@ -257,7 +257,7 @@ else
 
     ############ Step 2: Trimming, Filtering and subsampling ############
     echo "Trimming primer binding sites with cutadapt..."
-    parallel --max-procs $n_parallel --no-notice "cutadapt -g file:${primer_seqs} -a file:${primer_seqs} -m $len_min -M $len_max -o {.}.fq {} --revcomp --discard-untrimmed --report=minimal -e 0.3" ::: BRK*.fastq
+    parallel --max-procs $n_parallel --no-notice "cutadapt -g file:${primer_seqs} -a file:${primer_seqs} -m $len_min -M $len_max -o {.}.fq {} --revcomp --report=minimal -e 0.3" ::: BRK*.fastq
     seqs_after_trimming=$(cat *.fq | wc -l | awk '{print int($1/4)}')
     log "Number of sequences discarded due to lack of primers or incorrect length after trimming: $(($pre_filt_seqs - $seqs_after_trimming))"
     mkdir -p ${output_dir}/demux_data
@@ -450,7 +450,7 @@ if [ "$classification_method" == "sklearn" ]; then
         --i-classifier $classifier \
         --o-classification taxonomy.qza  \
         --p-confidence 0.9  \
-        --p-n-jobs 2
+        --p-n-jobs $n_parallel
 elif [ "$classification_method" == "vsearch" ]; then
     echo "Using vsearch classifier"
     qiime feature-classifier classify-consensus-vsearch \
