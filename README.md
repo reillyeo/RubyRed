@@ -6,7 +6,7 @@ Input data can be either raw or demultiplexed FASTQ files. Demultiplexing (if ne
 
 Next, all filtered reads are concatenated and imported into [QIIME2](https://docs.qiime2.org) as a single sequence artifact. A custom Python script is then employed to generate a feature table. Chimera removal is performed using VSEARCH’s uchime-ref algorithm against a reference database, and surviving sequences are reoriented with [RESCRIPt](https://github.com/bokulich-lab/RESCRIPt) to match reference strand orientation.
 
-For taxonomic assignment, the pipeline supports three classification methods: sklearn, consensus-vsearch, and consensus-blast. The sklearn method requires a pre-trained classifier, but is considerably faster than either of the other methods. Taxonomic classifications with abundance below a user-definable frequency threshold (default: 2) are filtered to reduce noise in the final dataset. The end products include a taxonomically annotated feature table and representative sequences.
+For taxonomic assignment, the pipeline supports three classification methods: sklearn, consensus-vsearch, and consensus-blast. The sklearn method requires a pre-trained classifier, but is considerably faster than either of the other methods. The final output includes a taxonomically annotated feature table (.biom and .tsv format) and an individual fasta file for each unique taxonomic classification, containing all sequences assigned to that taxon.
 
 
 ## Installation
