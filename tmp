@@ -232,7 +232,7 @@ else
         echo "$files_no FASTQ files to be demultiplexed."
         echo ""
         echo "Running guppy_barcoder..."
-        guppy_barcoder -i ./ -s demultiplexed_data -t $n_parallel --barcode_kits SQK16S-GXO192 -r
+        guppy_barcoder -i ./ -s demultiplexed_data -t $n_parallel --barcode_kits EXP-NBD103 -r
         echo "All data demultiplexed"
         cd demultiplexed_data
     fi
@@ -257,7 +257,7 @@ else
 
     ############ Step 2: Trimming, Filtering and subsampling ############
     echo "Trimming primer binding sites with cutadapt..."
-    parallel --max-procs $n_parallel --no-notice "cutadapt -g file:${primer_seqs} -a file:${primer_seqs} -m $len_min -M $len_max -o {.}.fq {} --revcomp -e 3 --report=minimal" ::: BRK*.fastq
+    parallel --max-procs $n_parallel --no-notice "cutadapt -g file:${primer_seqs} -a file:${primer_seqs} -m $len_min -M $len_max -o {.}.fq {} --revcomp --discard-untrimmed --report=minimal" ::: BRK*.fastq
     seqs_after_trimming=$(cat *.fq | wc -l | awk '{print int($1/4)}')
     log "Number of sequences discarded due to lack of primers or incorrect length after trimming: $(($pre_filt_seqs - $seqs_after_trimming))"
     mkdir -p ${output_dir}/demux_data
