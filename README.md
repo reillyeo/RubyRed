@@ -6,27 +6,24 @@ Input data can be either raw or demultiplexed FASTQ files. Demultiplexing (if ne
 
 Next, all filtered reads are concatenated and imported into [QIIME2](https://docs.qiime2.org) as a single sequence artifact. A custom Python script is then employed to generate a feature table. Chimera removal is performed using VSEARCH’s uchime-ref algorithm against a reference database, and surviving sequences are reoriented with [RESCRIPt](https://github.com/bokulich-lab/RESCRIPt) to match reference strand orientation.
 
-For taxonomic assignment, the pipeline supports three classification methods: sklearn, consensus-vsearch, and consensus-blast. The sklearn method requires a pre-trained classifier, but is considerably faster than either of the other methods. Taxonomic classifications with abundance below a user-definable frequency threshold (default: 2) are filtered to reduce noise in the final dataset. The end products include a taxonomically annotated feature table and representative sequences.
+For taxonomic assignment, the pipeline supports three classification methods: sklearn, consensus-vsearch, and consensus-blast. The sklearn method requires a pre-trained classifier, but is considerably faster than either of the other methods. The final output includes a taxonomically annotated feature table (.biom and .tsv format) and an individual fasta file for each unique taxonomic classification, containing all sequences assigned to that taxon.
 
 
 ## Installation
 
-Install RubyRed by cloning this repository. (Note: the paths used by the default parameters assume that the RubyRed directory exists at the location $HOME/my_scripts/RubyRed). 
+RubyRed is developed for Linux/Unix. A conda installation is required prior to installation.
+For out-of-the-box functionality, the following lines of code should be run:
 
-The fasta file containing primer sequences should be edited/replaced with whatever primer sequences you used.  
+    mkdir ~/my_scripts
+    cd ~/my_scripts
+    git clone https://github.com/reillyeo/RubyRed
+    conda env create -n qiime2 --file  https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2024.5/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml
+    conda activate qiime2
+    conda install -c bioconda -c conda-forge chopper seqkit parallel
+    echo 'export PATH="~/my_scripts/RubyRed/:$PATH"' >> ~/.bashrc
 
-The Guppy barcoder binary is required to be downloaded and added to your $PATH if you want RubyRed to demultiplex your data. Otherwise, demultiplex prior to starting, and use the -d flag.
-
-QIIME2 amplicon distribution must be downloaded in a conda environment called qiime2:
-
-    conda env create -n qiime2 --file https://data.qiime2.org/distro/amplicon/qiime2-amplicon-2024.10-py310-osx-conda.yml
-
-Activate your qiime2 environment and install Chopper and SeqKit:
-
-     conda activate qiime2
-     conda install -c bioconda chopper seqkit
-
-All other required packages are already included in QIIME2.
+If you want RubyRed to demultiplex your data, the Guppy barcoder binary is required to be downloaded and added to your $PATH. Otherwise, demultiplex prior to starting, and use the -d flag.
+The fasta file containing primer sequences should be edited/replaced with whatever primer sequences were used.  
 
 ## Usage
 
@@ -37,10 +34,10 @@ Options:
          -i      directory containing input FASTQ files (default: current directory)                
          -d      use this flag if data has already been demultiplexed                
          -q      minimum average read quality required to pass chopper quality filtering (default: 15)                
-         -l      minimum read length allowed to pass chopper length filtering (default: 800)                
-         -x      maximum read length allowed to pass chopper length filtering (default: 1600)                
+         -l      minimum read length allowed to pass chopper length filtering (default: 900)                
+         -x      maximum read length allowed to pass chopper length filtering (default: 1200)                
          -p      number of threads to use for parallel processing (default: 20)                
-         -m      minimum number of reads (post-filtering) to keep a file (default: 100)                
+         -m      minimum number of reads (post-filtering) to keep a file (default: 1)                
          -t      subsample fasta files with more than this number of reads (default: 30000)                
          -s      directory where python scripts are located (default: $HOME/my_scripts/RubyRed/scripts)                
          -w      path to the directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located (default: $HOME/my_scripts/RubyRed/resources)                

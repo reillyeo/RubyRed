@@ -92,10 +92,10 @@ resume_from_checkpoint() {
 input_dir=$(readlink -f "./") # Directory containing input FASTQ files
 demultiplexed="false" # Flag to indicate whether data in input directory is demultiplexed
 qfilt=15 # Quality filter for chopper   
-len_min=900 # Minimum read length for chopper
-len_max=1200 # Maximum read length for chopper
+len_min=800 # Minimum read length for chopper
+len_max=1600 # Maximum read length for chopper
 n_parallel=20 # Number of threads to use for parallel processing
-min_reads=100 # Minimum number of reads (post-filtering) to keep a file 
+min_reads=1 # Minimum number of reads (post-filtering) to keep a file 
 subsample_threshold=30000 # Subsample fasta files with more than this number of reads
 script_dir="$HOME/my_scripts/RubyRed/scripts" # Directory where python scripts and classifier directory are located
 resource_dir="$HOME/my_scripts/RubyRed/resources" # Directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located
@@ -135,10 +135,10 @@ while getopts "i:dq:l:x:p:m:t:s:w:u:r:y:c:z:f:o:h" opt; do
                 \n\t -i\t directory containing input FASTQ files (default: current directory)\
                 \n\t -d\t use this flag if data has already been demultiplexed\
                 \n\t -q\t minimum average read quality required to pass chopper quality filtering (default: 15)\
-                \n\t -l\t minimum read length allowed to pass chopper length filtering (default: 900)\
-                \n\t -x\t maximum read length allowed to pass chopper length filtering (default: 1200)\
+                \n\t -l\t minimum read length allowed to pass chopper length filtering (default: 800)\
+                \n\t -x\t maximum read length allowed to pass chopper length filtering (default: 1600)\
                 \n\t -p\t number of threads to use for parallel processing (default: 20)\
-                \n\t -m\t minimum number of reads (post-filtering) to keep a file (default: 100)\
+                \n\t -m\t minimum number of reads (post-filtering) to keep a file (default: 1)\
                 \n\t -t\t subsample fasta files with more than this number of reads (default: 30000)\
                 \n\t -s\t directory where python scripts are located (default: $HOME/my_scripts/RubyRed/scripts)\
                 \n\t -w\t path to the directory where resources (primer seqs, reference seqs, reference taxonomy, classifier) are located (default: $HOME/my_scripts/RubyRed/resources)\
@@ -256,10 +256,10 @@ else
 
 
     ############ Step 2: Trimming, Filtering and subsampling ############
-    echo "Trimming primer binding sites with cutadapt..."
-    parallel --max-procs $n_parallel --no-notice "cutadapt -g file:${primer_seqs} -a file:${primer_seqs} -m $len_min -M $len_max -o {.}.fq {} --revcomp -e 3 --report=minimal" ::: BRK*.fastq
+    echo "Filtering by length with cutadapt..."
+    parallel --max-procs $n_parallel --no-notice "cutadapt -m $len_min -M $len_max -o {.}.fq {} --report=minimal" ::: BRK*.fastq
     seqs_after_trimming=$(cat *.fq | wc -l | awk '{print int($1/4)}')
-    log "Number of sequences discarded due to lack of primers or incorrect length after trimming: $(($pre_filt_seqs - $seqs_after_trimming))"
+    log "Number of sequences discarded due to incorrect length: $(($pre_filt_seqs - $seqs_after_trimming))"
     mkdir -p ${output_dir}/demux_data
     mv BRK*.fastq ${output_dir}/demux_data/
     echo "Filtering and converting FASTQ to FASTA..."
@@ -450,7 +450,7 @@ if [ "$classification_method" == "sklearn" ]; then
         --i-classifier $classifier \
         --o-classification taxonomy.qza  \
         --p-confidence 0.9  \
-        --p-n-jobs 2
+        --p-n-jobs $n_parallel
 elif [ "$classification_method" == "vsearch" ]; then
     echo "Using vsearch classifier"
     qiime feature-classifier classify-consensus-vsearch \
