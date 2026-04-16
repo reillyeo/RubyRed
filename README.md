@@ -21,9 +21,7 @@ For out-of-the-box functionality, the following lines of code should be run:
     conda activate qiime2
     conda install -c bioconda -c conda-forge chopper seqkit parallel
     echo 'export PATH="~/my_scripts/RubyRed/:$PATH"' >> ~/.bashrc
-
-If you want RubyRed to demultiplex your data, the Guppy barcoder binary is required to be downloaded and added to your $PATH. Otherwise, demultiplex prior to starting, and use the -d flag.
-The fasta file containing primer sequences should be edited/replaced with whatever primer sequences were used.  
+    echo 'export PATH="~/my_scripts/RubyRed/resources/ont-guppy/bin/:$PATH"' >> ~/.bashrc
 
 ## Usage
 
