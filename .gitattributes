@@ -1,3 +1,1 @@
-resources/ont-guppy/data/* filter=lfs diff=lfs merge=lfs -text
-*.json filter=lfs diff=lfs merge=lfs -text
 *.jsn filter=lfs diff=lfs merge=lfs -text
