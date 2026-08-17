@@ -2,7 +2,7 @@
 
 Custom bioinformatics pipeline designed for high-throughput, read-by-read taxonomic classification of rRNA gene amplicons generated via Oxford Nanopore sequencing. RubyRed uses open-source tools and custom scripts to process raw fastq files and create taxonomically annotated feature tables.
 
-Input data can be either raw or demultiplexed FASTQ files. Demultiplexing (if necessary) is done using Guppy Barcoder, trimming of primer binding regions with [Cutadapt](https://github.com/marcelm/cutadapt), quality and length filtering with [Chopper](https://github.com/wdecoster/chopper), and subsequent conversion to FASTA format with [VSEARCH](https://github.com/torognes/vsearch). To ensure data consistency, sequences with fewer than a minimum read count are discarded, and samples exceeding a certain user-definable read number threshold (default: 30,000 reads) are subsampled using [SeqKit](https://github.com/shenwei356/seqkit).
+Input data can be either raw or demultiplexed FASTQ files. Demultiplexing (if necessary) is done using [Torchlex](https://nanoporetech.com/resource-centre/torchlex-method-real-time-demultiplexing-barcoded-oxford-nanopore-reads), trimming of primer binding regions with [Cutadapt](https://github.com/marcelm/cutadapt), quality and length filtering with [Chopper](https://github.com/wdecoster/chopper), and subsequent conversion to FASTA format with [VSEARCH](https://github.com/torognes/vsearch). To ensure data consistency, sequences with fewer than a minimum read count are discarded, and samples exceeding a certain user-definable read number threshold (default: 30,000 reads) are subsampled using [SeqKit](https://github.com/shenwei356/seqkit).
 
 Next, all filtered reads are concatenated and imported into [QIIME2](https://docs.qiime2.org) as a single sequence artifact. A custom Python script is then employed to generate a feature table. Chimera removal is performed using VSEARCH’s uchime-ref algorithm against a reference database, and surviving sequences are reoriented with [RESCRIPt](https://github.com/bokulich-lab/RESCRIPt) to match reference strand orientation.
 
@@ -21,7 +21,6 @@ For out-of-the-box functionality, the following lines of code should be run:
     conda activate qiime2
     conda install -c bioconda -c conda-forge chopper seqkit parallel
     echo 'export PATH="~/my_scripts/RubyRed/:$PATH"' >> ~/.bashrc
-    echo 'export PATH="~/my_scripts/RubyRed/resources/ont-guppy/bin/:$PATH"' >> ~/.bashrc
 
 ## Usage
 
