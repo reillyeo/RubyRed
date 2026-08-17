@@ -1,0 +1,15 @@
+pyproject.toml
+torchlex/__init__.py
+torchlex/cli.py
+torchlex/config.py
+torchlex/demultiplexer.py
+torchlex/fastq_reader.py
+torchlex/utils.py
+torchlex.egg-info/PKG-INFO
+torchlex.egg-info/SOURCES.txt
+torchlex.egg-info/dependency_links.txt
+torchlex.egg-info/entry_points.txt
+torchlex.egg-info/requires.txt
+torchlex.egg-info/top_level.txt
+torchlex/data/__init__.py
+torchlex/data/barcodes_custom2.fasta

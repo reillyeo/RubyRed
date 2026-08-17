@@ -1,0 +1,3 @@
+biopython>=1.79
+polyleven>=0.7
+numpy>=1.21

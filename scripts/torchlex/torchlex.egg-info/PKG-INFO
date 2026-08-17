@@ -1,0 +1,8 @@
+Metadata-Version: 2.4
+Name: torchlex
+Version: 1.0.0
+Summary: FASTQ demultiplexer for Oxford Nanopore data with barcode-based sample identification
+Requires-Python: >=3.8
+Requires-Dist: biopython>=1.79
+Requires-Dist: polyleven>=0.7
+Requires-Dist: numpy>=1.21
