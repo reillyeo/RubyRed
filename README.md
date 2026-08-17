@@ -21,7 +21,7 @@ For out-of-the-box functionality, the following lines of code should be run:
     conda activate qiime2
     conda install -c bioconda -c conda-forge chopper seqkit parallel
     echo 'export PATH="~/my_scripts/RubyRed/:$PATH"' >> ~/.bashrc
-    cd RubyRed/torchlex
+    cd RubyRed/scripts/torchlex
     pip install -e .
     source ~/.bashrc
 
