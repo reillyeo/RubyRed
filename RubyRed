@@ -228,7 +228,7 @@ else
         echo "$files_no FASTQ files to be demultiplexed."
         echo ""
         echo "Running torchlex demultiplexing..."
-        ${script_dir}/torchlex -i ./ -o demultiplexed_data -t $n_parallel --barcodes $resource_dir/torchlex_barcodes.fasta --min-qual 0 --min-len 1 --min-reads 1 --max-len 10000
+        torchlex -i ./ -o demultiplexed_data -t $n_parallel --barcodes $resource_dir/torchlex_barcodes.fasta --min-qual 0 --min-len 1 --min-reads 1 --max-len 10000
         echo "All data demultiplexed"
         cd demultiplexed_data
     fi
