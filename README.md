@@ -14,7 +14,7 @@ For taxonomic assignment, the pipeline supports three classification methods: sk
 RubyRed is developed for Linux/Unix. A conda installation is required prior to installation.
 For out-of-the-box functionality, the following lines of code should be run:
 
-    mkdir ~/my_scripts
+    mkdir -p ~/my_scripts
     cd ~/my_scripts
     git clone https://github.com/reillyeo/RubyRed
     conda env create -n qiime2 --file  https://raw.githubusercontent.com/qiime2/distributions/refs/heads/dev/2024.5/amplicon/released/qiime2-amplicon-ubuntu-latest-conda.yml
