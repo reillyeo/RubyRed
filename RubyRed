@@ -63,10 +63,6 @@ validate_paths() {
         echo "Error: taxa_fasta.py not found at ${script_dir}" >&2
         exit 1
     fi
-    if [ ! -f "$primer_seqs" ]; then
-        echo "Error: Primer sequences not found at $primer_seqs" >&2
-        exit 1
-    fi
 }
 # Function to log messages
 log() {
