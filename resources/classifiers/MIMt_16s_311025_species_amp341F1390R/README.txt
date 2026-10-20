@@ -13,7 +13,5 @@ Built 2026-09-30 (QIIME 2 2024.5, scikit-learn 1.4.2):
 
 30,239 of 31,436 references contained both primer sites (amplicon 984-1040 bp);
 668 of 24,441 species lost all references (listed in lost_species.txt).
-Taxonomy is the species-level MIMt_16s_311025_species taxonomy (symlinked).
+Taxonomy is the species-level MIMt_16s_311025_species taxonomy.
 
-Intended for reads trimmed to the same primers (RubyRed_trim). Use with:
-  RubyRed_trim -c <this dir>/MIMt_16s_311025_species_amp341F1390R_classifier.qza
