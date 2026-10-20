@@ -8,6 +8,7 @@ Next, all filtered reads are concatenated and imported into [QIIME2](https://doc
 
 For taxonomic assignment, the pipeline supports three classification methods: sklearn, consensus-vsearch, and consensus-blast. The sklearn method requires a pre-trained classifier, but is considerably faster than either of the other methods. The final output includes a taxonomically annotated feature table (.biom and .tsv format) and an individual fasta file for each unique taxonomic classification, containing all sequences assigned to that taxon.
 
+The pre-trained classifier included here in the resources directory is based on the the M2c_25_10 release of the [MIMt 16S database](https://mimt.bu.biopolis.pt/16s), with some additional curation to improve classification performance. 
 
 ## Installation
 
